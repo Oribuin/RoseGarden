@@ -6,8 +6,8 @@ import java.util.List;
 public record CommandInfo(String name,
                           List<String> aliases,
                           String permission,
-                          boolean playerOnly,
-                          String descriptionKey) {
+                          boolean playerOnly
+) {
 
     public static Builder builder(String name) {
         return new Builder(name);
@@ -19,14 +19,12 @@ public record CommandInfo(String name,
         private List<String> aliases;
         private String permission;
         private boolean playerOnly;
-        private String descriptionKey;
 
         private Builder(String name) {
             this.name = name;
             this.aliases = List.of();
             this.permission = null;
             this.playerOnly = false;
-            this.descriptionKey = null;
         }
 
         public Builder aliases(List<String> aliases) {
@@ -49,18 +47,12 @@ public record CommandInfo(String name,
             return this;
         }
 
-        public Builder descriptionKey(String descriptionKey) {
-            this.descriptionKey = descriptionKey;
-            return this;
-        }
-
         public CommandInfo build() {
             return new CommandInfo(
                     this.name,
                     this.aliases,
                     this.permission,
-                    this.playerOnly,
-                    this.descriptionKey
+                    this.playerOnly
             );
         }
 

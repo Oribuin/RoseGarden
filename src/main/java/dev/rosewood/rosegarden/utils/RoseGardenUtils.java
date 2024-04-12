@@ -16,10 +16,9 @@ import org.bukkit.command.CommandSender;
 
 public final class RoseGardenUtils {
 
-    public static final String GRADIENT = "<g:#8A2387:#E94057:#F27121>";
-    public static final String PREFIX = "&7[" + GRADIENT + "RoseGarden&7] ";
+    public static final String GRADIENT = "<gradient:#8A2387:#E94057:#F27121>";
 
-    public static final Map<Class<?>, Class<?>> PRIMITIVE_TO_WRAPPER = new HashMap<Class<?>, Class<?>>() {{
+    public static final Map<Class<?>, Class<?>> PRIMITIVE_TO_WRAPPER = new HashMap<>() {{
         this.put(boolean.class, Boolean.class);
         this.put(byte.class, Byte.class);
         this.put(char.class, Character.class);
@@ -163,18 +162,5 @@ public final class RoseGardenUtils {
         return clazz.isPrimitive() ? PRIMITIVE_TO_WRAPPER.get(clazz) : clazz;
     }
 
-    /**
-     * Sends a RoseGarden message to a recipient
-     */
-    public static void sendMessage(CommandSender recipient, String message) {
-        recipient.sendMessage(HexUtils.colorify(PREFIX + message));
-    }
-
-    /**
-     * Sends a RoseGarden message to a recipient
-     */
-    public static void sendMessage(CommandSender recipient, String message, StringPlaceholders placeholders) {
-        sendMessage(recipient, placeholders.apply(message));
-    }
 
 }

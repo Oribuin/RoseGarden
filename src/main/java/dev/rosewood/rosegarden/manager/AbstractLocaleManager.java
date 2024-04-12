@@ -1,14 +1,17 @@
 package dev.rosewood.rosegarden.manager;
 
 import dev.rosewood.rosegarden.RosePlugin;
-import dev.rosewood.rosegarden.command.framework.CommandMessages;
 import dev.rosewood.rosegarden.config.CommentedFileConfiguration;
-import dev.rosewood.rosegarden.hook.PlaceholderAPIHook;
+import dev.rosewood.rosegarden.hook.PAPI;
 import dev.rosewood.rosegarden.locale.Locale;
-import dev.rosewood.rosegarden.locale.YamlFileLocale;
 import dev.rosewood.rosegarden.locale.provider.JarResourceLocaleProvider;
-import dev.rosewood.rosegarden.utils.HexUtils;
 import dev.rosewood.rosegarden.utils.StringPlaceholders;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -16,12 +19,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractLocaleManager extends Manager {
 
+    protected final MiniMessage minimessage = MiniMessage.miniMessage();
     protected final File localeDirectory;
     protected Locale defaultLocale;
     protected Locale loadedLocale;
@@ -29,7 +30,7 @@ public abstract class AbstractLocaleManager extends Manager {
     public AbstractLocaleManager(RosePlugin rosePlugin) {
         super(rosePlugin);
 
-        this.localeDirectory = new File(this.rosePlugin.getDataFolder(), "locale");
+        this.localeDirectory = rosePlugin.getDataFolder();
     }
 
     @SuppressWarnings("unchecked")
@@ -51,52 +52,29 @@ public abstract class AbstractLocaleManager extends Manager {
         }
 
         Optional<Locale> defaultLocaleOptional = locales.stream()
-                .filter(x -> x.getLocaleName().equals("en_US"))
+                .filter(x -> x.getLocaleName().equals("locale"))
                 .findFirst();
 
         if (defaultLocaleOptional.isPresent()) {
             this.defaultLocale = defaultLocaleOptional.get();
         } else {
-            this.rosePlugin.getLogger().warning("No default 'locale/en_US.yml' locale found!");
+            this.rosePlugin.getLogger().warning("No default 'locale.yml' locale found!");
             this.defaultLocale = new Locale() {
-                public String getLocaleName() { return "none"; }
-                public Map<String, Object> getLocaleValues() { return Collections.emptyMap(); }
+                public String getLocaleName() {
+                    return "none";
+                }
+
+                public Map<String, Object> getLocaleValues() {
+                    return Collections.emptyMap();
+                }
             };
         }
 
-        //        .orElseThrow(() -> new IllegalStateException("No default 'locale/en_US.yml' locale found!"));
-
-        if (!this.localeDirectory.exists())
-            this.localeDirectory.mkdirs();
-
         // Transform any .lang files to .yml files
-        File[] files = this.localeDirectory.listFiles();
-        if (files != null) {
-            int migrated = 0;
-            for (File file : files) {
-                if (!file.getName().endsWith(".lang"))
-                    continue;
-
-                File newFile = new File(this.localeDirectory, file.getName().replace(".lang", ".yml"));
-                file.renameTo(newFile);
-                migrated++;
-            }
-
-            if (migrated > 0)
-                this.rosePlugin.getLogger().info("Migrated " + migrated + " locale files to the new .yml format");
-        }
-
         locales.forEach(this::registerLocale);
 
         // Find the desired locale file in the locale directory, allow both .lang and .yml file extensions
-        String localeName = this.rosePlugin.getManager(AbstractConfigurationManager.class).getConfig().getString("locale");
-        File localeFile = new File(this.localeDirectory, localeName + ".yml");
-        if (localeFile.exists()) {
-            this.loadedLocale = new YamlFileLocale(localeFile);
-        } else {
-            this.rosePlugin.getLogger().warning("Locale file '" + localeFile.getName() + "' not found, using default locale");
-            this.loadedLocale = this.defaultLocale;
-        }
+        this.loadedLocale = this.defaultLocale;
     }
 
     /**
@@ -106,7 +84,7 @@ public abstract class AbstractLocaleManager extends Manager {
      * @param locale The Locale to register
      */
     private void registerLocale(Locale locale) {
-        File file = new File(this.rosePlugin.getDataFolder() + "/locale", locale.getLocaleName() + ".yml");
+        File file = new File(this.rosePlugin.getDataFolder(), locale.getLocaleName() + ".yml");
         boolean newFile = false;
         if (!file.exists()) {
             try {
@@ -140,6 +118,7 @@ public abstract class AbstractLocaleManager extends Manager {
 
     @Override
     public void reload() {
+        // Load locale.yml from the jar
         this.registerLocales(this.getJarResourceLocales());
     }
 
@@ -159,10 +138,10 @@ public abstract class AbstractLocaleManager extends Manager {
     /**
      * Handles sending a message, can be edited to add additional functionality
      *
-     * @param sender The CommandSender to send the message to
+     * @param sender  The CommandSender to send the message to
      * @param message The fully parsed message to send
      */
-    protected void handleMessage(CommandSender sender, String message) {
+    protected void handleMessage(CommandSender sender, Component message) {
         sender.sendMessage(message);
     }
 
@@ -189,12 +168,12 @@ public abstract class AbstractLocaleManager extends Manager {
     /**
      * Gets a locale message with the given placeholders applied
      *
-     * @param messageKey The key of the message to get
+     * @param messageKey         The key of the message to get
      * @param stringPlaceholders The placeholders to apply
      * @return The locale message with the given placeholders applied
      */
     public String getLocaleMessage(String messageKey, StringPlaceholders stringPlaceholders) {
-        return HexUtils.colorify(stringPlaceholders.apply(this.getLocaleString(messageKey)));
+        return stringPlaceholders.apply(this.getLocaleString(messageKey));
     }
 
     /**
@@ -210,27 +189,23 @@ public abstract class AbstractLocaleManager extends Manager {
     /**
      * Gets a locale message with the given placeholders applied, falling back to the default command messages if none found
      *
-     * @param messageKey The key of the message to get
+     * @param messageKey         The key of the message to get
      * @param stringPlaceholders The placeholders to apply
      * @return The locale message with the given placeholders applied
      */
     public String getCommandLocaleMessage(String messageKey, StringPlaceholders stringPlaceholders) {
-        String message;
         try {
-            message = this.getLocaleMessage(messageKey, stringPlaceholders);
+            return this.getLocaleMessage(messageKey, stringPlaceholders);
         } catch (IllegalStateException e) {
-            message = CommandMessages.DEFAULT_MESSAGES.get(messageKey);
-            if (message == null)
-                message = this.getErrorMessage(messageKey);
+            return this.getErrorMessage(messageKey);
         }
-        return HexUtils.colorify(stringPlaceholders.apply(message));
     }
 
     /**
      * Sends a message to a CommandSender with the prefix with placeholders applied
      *
-     * @param sender The CommandSender to send to
-     * @param messageKey The message key of the Locale to send
+     * @param sender             The CommandSender to send to
+     * @param messageKey         The message key of the Locale to send
      * @param stringPlaceholders The placeholders to apply
      */
     public void sendMessage(CommandSender sender, String messageKey, StringPlaceholders stringPlaceholders) {
@@ -244,7 +219,7 @@ public abstract class AbstractLocaleManager extends Manager {
     /**
      * Sends a message to a CommandSender with the prefix
      *
-     * @param sender The CommandSender to send to
+     * @param sender     The CommandSender to send to
      * @param messageKey The message key of the Locale to send
      */
     public void sendMessage(CommandSender sender, String messageKey) {
@@ -254,8 +229,8 @@ public abstract class AbstractLocaleManager extends Manager {
     /**
      * Sends a message to a CommandSender with the prefix with placeholders applied, falling back to the default command messages if none found
      *
-     * @param sender The CommandSender to send to
-     * @param messageKey The message key of the Locale to send
+     * @param sender             The CommandSender to send to
+     * @param messageKey         The message key of the Locale to send
      * @param stringPlaceholders The placeholders to apply
      */
     public void sendCommandMessage(CommandSender sender, String messageKey, StringPlaceholders stringPlaceholders) {
@@ -269,7 +244,7 @@ public abstract class AbstractLocaleManager extends Manager {
     /**
      * Sends a message to a CommandSender with the prefix, falling back to the default command messages if none found
      *
-     * @param sender The CommandSender to send to
+     * @param sender     The CommandSender to send to
      * @param messageKey The message key of the Locale to send
      */
     public void sendCommandMessage(CommandSender sender, String messageKey) {
@@ -279,8 +254,8 @@ public abstract class AbstractLocaleManager extends Manager {
     /**
      * Sends a message to a CommandSender with placeholders applied
      *
-     * @param sender The CommandSender to send to
-     * @param messageKey The message key of the Locale to send
+     * @param sender             The CommandSender to send to
+     * @param messageKey         The message key of the Locale to send
      * @param stringPlaceholders The placeholders to apply
      */
     public void sendSimpleMessage(CommandSender sender, String messageKey, StringPlaceholders stringPlaceholders) {
@@ -290,7 +265,7 @@ public abstract class AbstractLocaleManager extends Manager {
     /**
      * Sends a message to a CommandSender, falling back to the default command messages if none found
      *
-     * @param sender The CommandSender to send to
+     * @param sender     The CommandSender to send to
      * @param messageKey The message key of the Locale to send
      */
     public void sendSimpleMessage(CommandSender sender, String messageKey) {
@@ -300,8 +275,8 @@ public abstract class AbstractLocaleManager extends Manager {
     /**
      * Sends a message to a CommandSender with placeholders applied, falling back to the default command messages if none found
      *
-     * @param sender The CommandSender to send to
-     * @param messageKey The message key of the Locale to send
+     * @param sender             The CommandSender to send to
+     * @param messageKey         The message key of the Locale to send
      * @param stringPlaceholders The placeholders to apply
      */
     public void sendSimpleCommandMessage(CommandSender sender, String messageKey, StringPlaceholders stringPlaceholders) {
@@ -315,7 +290,7 @@ public abstract class AbstractLocaleManager extends Manager {
     /**
      * Sends a custom message to a CommandSender
      *
-     * @param sender The CommandSender to send to
+     * @param sender  The CommandSender to send to
      * @param message The message to send
      */
     public void sendCustomMessage(CommandSender sender, String message) {
@@ -325,41 +300,32 @@ public abstract class AbstractLocaleManager extends Manager {
     /**
      * Replaces PlaceholderAPI placeholders if PlaceholderAPI is enabled
      *
-     * @param sender The potential Player to replace with
+     * @param sender  The potential Player to replace with
      * @param message The message
      * @return A placeholder-replaced message
      */
     protected String parsePlaceholders(CommandSender sender, String message) {
         if (sender instanceof Player player)
-            return PlaceholderAPIHook.applyPlaceholders(player, message);
+            return PAPI.apply(player, message);
         return message;
     }
 
     /**
      * Sends a message with placeholders and colors parsed to a CommandSender
      *
-     * @param sender The sender to send the message to
+     * @param sender  The sender to send the message to
      * @param message The message
      */
     protected void sendParsedMessage(CommandSender sender, String message) {
         if (message.isEmpty())
             return;
 
-        String parsedMessage = HexUtils.colorify(this.parsePlaceholders(sender, message));
+        Component parsedMessage = this.minimessage.deserialize(this.parsePlaceholders(sender, message));
         this.handleMessage(sender, parsedMessage);
     }
 
     protected String getErrorMessage(String messageKey) {
-        new LocaleException(messageKey).printStackTrace();
-        return "&cMissing locale string: " + messageKey;
-    }
-
-    public static class LocaleException extends RuntimeException {
-
-        public LocaleException(String messageKey) {
-            super(String.format("Missing locale string: %s", messageKey));
-        }
-
+        return "<red>Missing locale string: " + messageKey;
     }
 
 }

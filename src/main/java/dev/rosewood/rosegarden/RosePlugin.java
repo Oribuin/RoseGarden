@@ -6,7 +6,6 @@ import dev.rosewood.rosegarden.manager.AbstractDataManager;
 import dev.rosewood.rosegarden.manager.AbstractLocaleManager;
 import dev.rosewood.rosegarden.manager.DataMigrationManager;
 import dev.rosewood.rosegarden.manager.Manager;
-import dev.rosewood.rosegarden.manager.PluginUpdateManager;
 import dev.rosewood.rosegarden.objects.RosePluginData;
 import dev.rosewood.rosegarden.utils.RoseGardenUtils;
 import java.io.File;
@@ -172,9 +171,6 @@ public abstract class RosePlugin extends JavaPlugin {
 
         managerLoadPriority.addAll(this.getManagerLoadPriority());
 
-        if (this.spigotId != -1)
-            managerLoadPriority.add(PluginUpdateManager.class);
-
         managerLoadPriority.forEach(this::getManager);
     }
 
@@ -283,13 +279,6 @@ public abstract class RosePlugin extends JavaPlugin {
         if (!configDir.exists())
             configDir.mkdirs();
         return configDir;
-    }
-
-    /**
-     * @return the version of the latest update of this plugin, or null if there is none
-     */
-    public final String getUpdateVersion() {
-        return this.getManager(PluginUpdateManager.class).getUpdateVersion();
     }
 
     public final boolean hasConfigurationManager() {

@@ -1,7 +1,6 @@
 package dev.rosewood.rosegarden.manager;
 
 import dev.rosewood.rosegarden.RosePlugin;
-import dev.rosewood.rosegarden.command.RwdCommand;
 import dev.rosewood.rosegarden.command.framework.BaseRoseCommand;
 import dev.rosewood.rosegarden.command.framework.RoseCommandWrapper;
 import java.util.ArrayList;
@@ -18,10 +17,6 @@ public abstract class AbstractCommandManager extends Manager {
         super(rosePlugin);
 
         this.commandWrappers = new ArrayList<>();
-
-        if (rosePlugin.isFirstToRegister())
-            this.commandWrappers.add(new RoseCommandWrapper("rosegarden", rosePlugin.getRoseGardenDataFolder(), rosePlugin, new RwdCommand(rosePlugin)));
-
         this.getRootCommands().stream()
                 .map(x -> x.apply(this.rosePlugin))
                 .map(x -> new RoseCommandWrapper(this.rosePlugin, x))

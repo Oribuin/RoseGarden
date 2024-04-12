@@ -5,7 +5,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
-public final class PlaceholderAPIHook {
+public final class PAPI {
 
     private static Boolean enabled;
 
@@ -25,24 +25,10 @@ public final class PlaceholderAPIHook {
      * @param text The text to replace placeholders
      * @return A string with replaced placeholders
      */
-    public static String applyPlaceholders(OfflinePlayer player, String text) {
-        if (enabled())
-            return PlaceholderAPI.setPlaceholders(player, text);
-        return text;
-    }
+    public static String apply(OfflinePlayer player, String text) {
+        if (text == null) return "";
 
-    /**
-     * Applies relational placeholders from PlaceholderAPI to strings
-     *
-     * @param one The first player to compare
-     * @param two The second player to compare
-     * @param text The text to replace placeholders
-     * @return A string with replaced placeholders
-     */
-    public static String applyRelationalPlaceholders(Player one, Player two, String text) {
-        if (enabled())
-            return PlaceholderAPI.setRelationalPlaceholders(one, two, text);
-        return text;
+        return enabled() ? PlaceholderAPI.setPlaceholders(player, text) : text;
     }
 
 }

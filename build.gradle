@@ -3,7 +3,6 @@ import org.apache.tools.ant.filters.ReplaceTokens
 plugins {
     id 'java-library'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
-    id 'maven-publish'
     id 'jacoco'
 }
 
@@ -70,31 +69,4 @@ shadowJar {
     relocate('org.bstats', 'dev.rosewood.rosegarden.lib.bstats')
 }
 
-publishing {
-    publications {
-        shadow(MavenPublication) { publication ->
-            project.shadow.component(publication)
-            artifactId = 'rosegarden'
-            pom {
-                name = 'rosegarden'
-            }
-        }
-    }
-    repositories {
-        if (project.hasProperty('mavenUser') && project.hasProperty('mavenPassword')) {
-            maven {
-                credentials {
-                    username project.mavenUser
-                    password project.mavenPassword
-                }
-
-                def releasesRepoUrl = 'https://repo.rosewooddev.io/repository/public-releases/'
-                def snapshotsRepoUrl = 'https://repo.rosewooddev.io/repository/public-snapshots/'
-                url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-            }
-        }
-    }
-}
-
 build.dependsOn shadowJar
-publishShadowPublicationToMavenRepository.dependsOn jar

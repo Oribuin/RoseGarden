@@ -70,11 +70,6 @@ public abstract class BaseRoseCommand implements RoseCommand {
     }
 
     @Override
-    public final String getDescriptionKey() {
-        return this.getCommandInfo().descriptionKey();
-    }
-
-    @Override
     public final ArgumentsDefinition getCommandArguments() {
         if (this.argumentsDefinition == null)
             this.argumentsDefinition = this.createArgumentsDefinition();

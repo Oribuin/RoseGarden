@@ -37,11 +37,6 @@ public interface RoseCommand {
     boolean isPlayerOnly();
 
     /**
-     * @return the description key of the command
-     */
-    String getDescriptionKey();
-
-    /**
      * @return the {@link ArgumentsDefinition} of the command
      */
     ArgumentsDefinition getCommandArguments();
