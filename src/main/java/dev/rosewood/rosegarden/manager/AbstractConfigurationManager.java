@@ -7,9 +7,11 @@ import dev.rosewood.rosegarden.config.SingularRoseSetting;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractConfigurationManager extends Manager {
 
@@ -55,11 +57,13 @@ public abstract class AbstractConfigurationManager extends Manager {
     /**
      * @return the header to place at the top of the configuration file
      */
+    @NotNull
     protected abstract String[] getHeader();
 
     /**
      * @return the config.yml as a CommentedFileConfiguration
      */
+    @NotNull
     public CommentedFileConfiguration getConfig() {
         return this.configuration;
     }
@@ -76,7 +80,7 @@ public abstract class AbstractConfigurationManager extends Manager {
                     this.cachedValues.put(roseSetting.getKey(), roseSetting);
             } catch (ReflectiveOperationException ex) {
                 ex.printStackTrace();
-                this.cachedValues = Map.of();
+                this.cachedValues = Collections.emptyMap();
             }
 
             this.injectAdditionalSettings();
@@ -101,8 +105,9 @@ public abstract class AbstractConfigurationManager extends Manager {
             this.getDatabaseSettings().forEach(x -> this.cachedValues.put(x.getKey(), x));
     }
 
+    @NotNull
     protected List<RoseSetting> getDatabaseSettings() {
-        return List.of(
+        return Arrays.asList(
                 new SingularRoseSetting(this.rosePlugin, "mysql-settings", null, "Settings for if you want to use MySQL for data management"),
                 new SingularRoseSetting(this.rosePlugin, "mysql-settings.enabled", false, "Enable MySQL", "If false, SQLite will be used instead"),
                 new SingularRoseSetting(this.rosePlugin, "mysql-settings.hostname", "", "MySQL Database Hostname"),

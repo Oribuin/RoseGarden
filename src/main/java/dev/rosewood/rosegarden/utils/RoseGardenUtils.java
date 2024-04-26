@@ -78,7 +78,8 @@ public final class RoseGardenUtils {
 
         String keyPath = currentSection.getCurrentPath() == null ? key : currentSection.getCurrentPath() + "." + key;
 
-        if (defaultValue instanceof RoseSettingSection settingSection) {
+        if (defaultValue instanceof RoseSettingSection) {
+            RoseSettingSection settingSection = (RoseSettingSection) defaultValue;
             baseConfiguration.addPathedComments(keyPath, comments);
             currentSection = currentSection.createSection(key);
 
@@ -148,8 +149,8 @@ public final class RoseGardenUtils {
      * @return true if RoseGarden has been relocated properly, otherwise false
      */
     public static boolean isRelocated() {
-        String defaultPackage = new String(new byte[]{'d', 'e', 'v', '.', 'r', 'o', 's', 'e', 'w', 'o', 'o', 'd', '.', 'r', 'o', 's', 'e', 'g', 'a', 'r', 'd', 'e', 'n'});
-        return !RosePlugin.class.getPackage().getName().equals(defaultPackage);
+        String defaultPackage = "dev,rosewood,rosegarden".replace(",", ".");
+        return !RosePlugin.class.getPackage().getName().startsWith(defaultPackage);
     }
 
     /**

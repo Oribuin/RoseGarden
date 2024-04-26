@@ -4,6 +4,7 @@ import dev.rosewood.rosegarden.command.framework.Argument;
 import dev.rosewood.rosegarden.command.framework.ArgumentHandler;
 import dev.rosewood.rosegarden.command.framework.CommandContext;
 import dev.rosewood.rosegarden.command.framework.InputIterator;
+import java.util.Collections;
 import java.util.List;
 
 public class StringArgumentHandler extends ArgumentHandler<String> {
@@ -13,7 +14,7 @@ public class StringArgumentHandler extends ArgumentHandler<String> {
     }
 
     @Override
-    public String handle(CommandContext context, Argument argument, InputIterator inputIterator) {
+    public String handle(CommandContext context, Argument argument, InputIterator inputIterator) throws HandledArgumentException {
         String input = inputIterator.next();
         if (input.trim().isEmpty())
             throw new HandledArgumentException("argument-handler-string");
@@ -22,7 +23,7 @@ public class StringArgumentHandler extends ArgumentHandler<String> {
 
     @Override
     public List<String> suggest(CommandContext context, Argument argument, String[] args) {
-        return List.of(argument.parameter());
+        return Collections.singletonList(argument.parameter());
     }
 
 }

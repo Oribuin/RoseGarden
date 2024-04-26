@@ -5,6 +5,7 @@ import dev.rosewood.rosegarden.command.framework.ArgumentHandler;
 import dev.rosewood.rosegarden.command.framework.CommandContext;
 import dev.rosewood.rosegarden.command.framework.InputIterator;
 import dev.rosewood.rosegarden.utils.StringPlaceholders;
+import java.util.Collections;
 import java.util.List;
 
 public class FloatArgumentHandler extends ArgumentHandler<Float> {
@@ -14,7 +15,7 @@ public class FloatArgumentHandler extends ArgumentHandler<Float> {
     }
 
     @Override
-    public Float handle(CommandContext context, Argument argument, InputIterator inputIterator) {
+    public Float handle(CommandContext context, Argument argument, InputIterator inputIterator) throws HandledArgumentException {
         String input = inputIterator.next();
         try {
             return Float.parseFloat(input);
@@ -25,7 +26,7 @@ public class FloatArgumentHandler extends ArgumentHandler<Float> {
 
     @Override
     public List<String> suggest(CommandContext context, Argument argument, String[] args) {
-        return List.of(argument.parameter());
+        return Collections.singletonList(argument.parameter());
     }
 
 }

@@ -1,15 +1,30 @@
 package dev.rosewood.rosegarden.command.framework;
 
 import dev.rosewood.rosegarden.RosePlugin;
+import dev.rosewood.rosegarden.command.framework.annotation.RoseExecutable;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.bukkit.command.CommandException;
 
+/**
+ * The base class for all RoseGarden commands.
+ * <p>
+ * Override {@link #createArgumentsDefinition()} and {@link #createCommandInfo()} to customize the command.
+ * <p>
+ * To make executable methods in the command, annotate them with {@link RoseExecutable}. The first parameter will be
+ * a {@link CommandContext} instance and the following parameters will be the command arguments as defined by the
+ * {@link ArgumentsDefinition}. For example:
+ * <blockquote><pre>
+ *     @RoseExecutable
+ *     public void execute(CommandContext context, /* additional parameters here *\/) {
+ *         // ...
+ *     }
+ * <pre></blockquote>
+ */
 public abstract class BaseRoseCommand implements RoseCommand {
 
     protected final RosePlugin rosePlugin;
@@ -84,11 +99,10 @@ public abstract class BaseRoseCommand implements RoseCommand {
 
         Optional<Method> method = methods.stream()
                 .map(x -> new MethodScore(this.getParameterMatchScore(x, context.getUsedArgumentTypes()), x))
-                .filter(x -> x.score() != null)
                 .sorted(Comparator.comparingInt(MethodScore::score).reversed())
                 .map(MethodScore::method)
                 .findFirst();
-        if (method.isEmpty()) {
+        if (!method.isPresent()) {
             String arguments = Arrays.stream(context.getUsedArgumentTypes()).map(Class::getName).collect(Collectors.joining(", "));
             this.rosePlugin.getLogger().warning("No matching @RoseExecutable method found for command " + this.getCommandInfo().name() + ". Expected arguments (or similar matching optional arguments): [" + arguments + "]");
             return;
@@ -158,7 +172,6 @@ public abstract class BaseRoseCommand implements RoseCommand {
         return index >= 0 && index < array.length ? array[index] : null;
     }
 
-
     protected Object[] buildMethodParameters(CommandContext context, Method method) {
         Object[] parameters = new Object[method.getParameterCount()];
         parameters[0] = context;
@@ -167,11 +180,27 @@ public abstract class BaseRoseCommand implements RoseCommand {
         return parameters;
     }
 
-    private record MethodScore(Integer score, Method method) implements Comparable<MethodScore> {
+    private static class MethodScore implements Comparable<MethodScore> {
+
+        private final int score;
+        private final Method method;
+
+        private MethodScore(int score, Method method) {
+            this.score = score;
+            this.method = method;
+        }
+
+        public int score() {
+            return this.score;
+        }
+
+        public Method method() {
+            return this.method;
+        }
 
         @Override
         public int compareTo(BaseRoseCommand.MethodScore o) {
-            return Objects.requireNonNullElse(this.score, Integer.MIN_VALUE) - Objects.requireNonNullElse(o.score, Integer.MIN_VALUE);
+            return Integer.compare(this.score, o.score);
         }
 
     }

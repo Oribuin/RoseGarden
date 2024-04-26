@@ -6,6 +6,8 @@ import dev.rosewood.rosegarden.command.framework.CommandContext;
 import dev.rosewood.rosegarden.command.framework.InputIterator;
 import dev.rosewood.rosegarden.utils.StringPlaceholders;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +42,7 @@ public abstract class AbstractColorArgumentHandler<T> extends ArgumentHandler<T>
     protected abstract T rgbToColor(int r, int g, int b);
 
     @Override
-    public final T handle(CommandContext context, Argument argument, InputIterator inputIterator) {
+    public final T handle(CommandContext context, Argument argument, InputIterator inputIterator) throws HandledArgumentException {
         String input = inputIterator.next();
 
         // Try hex values first
@@ -75,15 +77,15 @@ public abstract class AbstractColorArgumentHandler<T> extends ArgumentHandler<T>
     @Override
     public final List<String> suggest(CommandContext context, Argument argument, String[] args) {
         if (args.length == 0 || args.length == 1) {
-            List<String> inputs = new ArrayList<>(List.of("<#hexCode>", "<0-255> <0-255> <0-255>"));
+            List<String> inputs = new ArrayList<>(Arrays.asList("<#hexCode>", "<0-255> <0-255> <0-255>"));
             inputs.addAll(COLOR_NAME_MAP.keySet());
             return inputs;
         } else if (args.length == 2) {
-            return List.of("<0-255> <0-255>");
+            return Collections.singletonList("<0-255> <0-255>");
         } else if (args.length == 3) {
-            return List.of("<0-255>");
+            return Collections.singletonList("<0-255>");
         }
-        return List.of();
+        return Collections.emptyList();
     }
 
 }

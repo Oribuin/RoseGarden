@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.bukkit.command.CommandSender;
 
 public class CommandContext {
@@ -15,7 +14,7 @@ public class CommandContext {
     private final CommandSender sender;
     private final String commandLabel;
     private final String[] rawArguments;
-    private final Map<Argument, Object> parametersByArgument;
+    private final Map<Argument.CommandArgument<?>, Object> parametersByArgument;
     private final ListMultimap<Class<?>, Object> parametersByType;
     private final Map<String, Object> parametersByName;
 
@@ -58,9 +57,13 @@ public class CommandContext {
      * @param <T> The type of the value
      */
     public <T> void put(Argument argument, T value) {
-        this.parametersByArgument.put(argument, value);
-        this.parametersByType.put(value.getClass(), value);
-        this.parametersByName.put(argument.name(), value);
+        if (!(argument instanceof Argument.CommandArgument<?>))
+            throw new IllegalArgumentException("Context parameters can only be put for command arguments");
+
+        Argument.CommandArgument<?> commandArgument = (Argument.CommandArgument<?>) argument;
+        this.parametersByArgument.put(commandArgument, value);
+        this.parametersByType.put(commandArgument.handler().getHandledType(), value);
+        this.parametersByName.put(commandArgument.name(), value);
     }
 
     /**
@@ -119,16 +122,17 @@ public class CommandContext {
     /**
      * @return An array of used argument types
      */
-    public Class<?>[] getUsedArgumentTypes() {
-        return this.parametersByArgument.values().stream()
-                .map(Object::getClass)
+    protected Class<?>[] getUsedArgumentTypes() {
+        return this.parametersByArgument.keySet().stream()
+                .map(Argument.CommandArgument::handler)
+                .map(ArgumentHandler::getHandledType)
                 .toArray(Class[]::new);
     }
 
     /**
      * @return A wrapped readonly version of this CommandContext. The original object is still mutable.
      */
-    public CommandContext readonly() {
+    protected CommandContext readonly() {
         return new ReadonlyCommandContext(this.sender, this.commandLabel, this.rawArguments);
     }
 

@@ -41,7 +41,8 @@ public abstract class AbstractLocaleManager extends Manager {
         StringPlaceholders placeholders = placeholdersBuilder.build();
         for (Locale locale : locales) {
             for (Map.Entry<String, Object> entry : locale.getLocaleValues().entrySet()) {
-                if (entry.getValue() instanceof String value) {
+                if (entry.getValue() instanceof String) {
+                    String value = (String) entry.getValue();
                     locale.getLocaleValues().put(entry.getKey(), placeholders.apply(value));
                 } else if (entry.getValue() instanceof List) {
                     List<String> list = (List<String>) entry.getValue();
@@ -211,8 +212,6 @@ public abstract class AbstractLocaleManager extends Manager {
     public void sendMessage(CommandSender sender, String messageKey, StringPlaceholders stringPlaceholders) {
         String prefix = this.getLocaleMessage("prefix");
         String message = this.getLocaleMessage(messageKey, stringPlaceholders);
-        if (message.isEmpty())
-            return;
         this.sendParsedMessage(sender, prefix + message);
     }
 
@@ -236,9 +235,7 @@ public abstract class AbstractLocaleManager extends Manager {
     public void sendCommandMessage(CommandSender sender, String messageKey, StringPlaceholders stringPlaceholders) {
         String prefix = this.getLocaleMessage("prefix");
         String message = this.getCommandLocaleMessage(messageKey, stringPlaceholders);
-        if (message.isEmpty())
-            return;
-        this.sendParsedMessage(sender, prefix + message);
+        this.sendUnparsedMessage(sender, prefix + message);
     }
 
     /**
@@ -280,7 +277,7 @@ public abstract class AbstractLocaleManager extends Manager {
      * @param stringPlaceholders The placeholders to apply
      */
     public void sendSimpleCommandMessage(CommandSender sender, String messageKey, StringPlaceholders stringPlaceholders) {
-        this.sendParsedMessage(sender, this.getCommandLocaleMessage(messageKey, stringPlaceholders));
+        this.sendUnparsedMessage(sender, this.getCommandLocaleMessage(messageKey, stringPlaceholders));
     }
 
     public void sendSimpleCommandMessage(CommandSender sender, String messageKey) {
@@ -305,8 +302,8 @@ public abstract class AbstractLocaleManager extends Manager {
      * @return A placeholder-replaced message
      */
     protected String parsePlaceholders(CommandSender sender, String message) {
-        if (sender instanceof Player player)
-            return PAPI.apply(player, message);
+        if (sender instanceof Player)
+            return PAPI.apply((Player) sender, message);
         return message;
     }
 
@@ -321,6 +318,20 @@ public abstract class AbstractLocaleManager extends Manager {
             return;
 
         Component parsedMessage = this.minimessage.deserialize(this.parsePlaceholders(sender, message));
+        this.handleMessage(sender, parsedMessage);
+    }
+
+    /**
+     * Sends a message with only colors parsed to a CommandSender
+     *
+     * @param sender The sender to send the message to
+     * @param message The message
+     */
+    protected void sendUnparsedMessage(CommandSender sender, String message) {
+        if (message.isEmpty())
+            return;
+
+        String parsedMessage = HexUtils.colorify(message);
         this.handleMessage(sender, parsedMessage);
     }
 

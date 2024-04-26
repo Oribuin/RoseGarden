@@ -3,6 +3,7 @@ package dev.rosewood.rosegarden.command.framework;
 import dev.rosewood.rosegarden.command.framework.annotation.RoseExecutable;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.bukkit.permissions.Permissible;
 
@@ -44,13 +45,17 @@ public interface RoseCommand {
     /**
      * @return a displayable output of this command's parameters
      */
-    default String getParametersString() {
+    default String getParametersString(CommandContext context) {
         StringBuilder stringBuilder = new StringBuilder();
         ArgumentsDefinition argumentsDefinition = this.getCommandArguments();
         for (int i = 0; i < argumentsDefinition.size(); i++) {
+            Argument argument = argumentsDefinition.get(i);
+            if (!argument.condition().test(context))
+                continue;
+
             if (i > 0)
                 stringBuilder.append(' ');
-            stringBuilder.append(argumentsDefinition.get(i).parameter());
+            stringBuilder.append(argument.parameter());
         }
         return stringBuilder.toString();
     }
@@ -61,7 +66,7 @@ public interface RoseCommand {
     default List<Method> getExecuteMethods() {
         return Stream.of(this.getClass().getMethods())
                 .filter(m -> m.isAnnotationPresent(RoseExecutable.class))
-                .toList();
+                .collect(Collectors.toList());
     }
 
     /**
