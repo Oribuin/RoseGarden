@@ -18,7 +18,7 @@ public final class RoseGardenUtils {
 
     public static final String GRADIENT = "<gradient:#8A2387:#E94057:#F27121>";
 
-    public static final Map<Class<?>, Class<?>> PRIMITIVE_TO_WRAPPER = new HashMap<>() {{
+    public static final Map<Class<?>, Class<?>> PRIMITIVE_TO_WRAPPER = new HashMap<Class<?>, Class<?>>() {{
         this.put(boolean.class, Boolean.class);
         this.put(byte.class, Byte.class);
         this.put(char.class, Character.class);
@@ -57,10 +57,7 @@ public final class RoseGardenUtils {
     public static boolean containsConfigSpecialCharacters(String string) {
         for (char c : string.toCharArray()) {
             // Range taken from SnakeYAML's Emitter.java
-            if (!(c == '\n' || (0x20 <= c && c <= 0x7E)) &&
-                    (c == 0x85 || (c >= 0xA0 && c <= 0xD7FF)
-                            || (c >= 0xE000 && c <= 0xFFFD)
-                            || (c >= 0x10000 && c <= 0x10FFFF))) {
+            if ((c == 0x85 || c >= 0xA0 && c <= 0xD7FF || c >= 0xE000 && c <= 0xFFFD)) {
                 return true;
             }
         }

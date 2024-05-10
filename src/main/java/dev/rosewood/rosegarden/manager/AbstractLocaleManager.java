@@ -331,8 +331,7 @@ public abstract class AbstractLocaleManager extends Manager {
         if (message.isEmpty())
             return;
 
-        String parsedMessage = HexUtils.colorify(message);
-        this.handleMessage(sender, parsedMessage);
+        this.handleMessage(sender, this.minimessage.deserialize(message));
     }
 
     protected String getErrorMessage(String messageKey) {
